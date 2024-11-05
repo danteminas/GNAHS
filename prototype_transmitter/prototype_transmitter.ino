@@ -6,6 +6,11 @@ Code for the transmitter module of the GNAHS prototype. In the
 Author: Evan Dworkin
 */
 
+/*
+To-do: Move data transmission to a single struct to avoid
+any syncronization issues
+*/
+
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -32,22 +37,28 @@ void setup() {
 
   radio.begin();
   radio.openWritingPipe(addresses[0]); // node1
-  radio.setPALevel(RF24_PA_LOW);
+  radio.setPALevel(RF24_PA_LOW); // Power amplification, low for short range
+  radio.stopListening(); // Trasmitter doesn't need to listen
+  radio.flush_tx(); // Make sure no residual in buffer
 
   Serial.begin(9600);
-  radio.stopListening();
-  radio.flush_tx();
+  if (!radio.isChipConnected()) {
+    Serial.println("RF24 module is not connected properly!");
+  } else {
+    Serial.println("RF24 module connected successfully.");
+  }
 }
 
 void loop() {
   x = analogRead(x_in);
   y = analogRead(y_in);
 
-  angle = map(x, 0, 1023, 0, 180);
-  duty = map(y, 0, 1023, -255, 255);
+  radio.write(&x, sizeof(x));
+  radio.write(&y, sizeof(y));
 
-  radio.write(&angle, sizeof(angle));
-  radio.write(&duty, sizeof(duty));
+  Serial.print(x);
+  Serial.print(", ");
+  Serial.println(y);
 
   delay(10);
 }

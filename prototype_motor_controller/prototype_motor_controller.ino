@@ -12,11 +12,12 @@ Author: Evan Dworkin
 */
 
 /*
-To-do:
-  Test code with Nano receiver
+To-do: Find a separate battery to power the DC motors;
+  the 9V battery is insufficient
 */
 
 #include <Servo.h>
+#include <Wire.h>
 
 // Motor control pins
 int servo_control_pin = 5;
@@ -25,15 +26,12 @@ int motor_pin_b = 11;
 int direction_pin_a = 12;
 int direction_pin_b = 13;
 
-// Data reception pins
-int angle_receptor_pin = A5;
-int duty_receptor_pin = A4;
-
 // Read data from Nano receiver
+int angle_read, duty_read; // Raw data reception through I2C
 int angle; // An angle value between 0-180
 int duty; // A duty cycle value between -255-255
 
-// Setup servo
+// Instantiate servo
 Servo servo;
 
 void setup() {
@@ -43,23 +41,30 @@ void setup() {
   pinMode(direction_pin_a, OUTPUT);
   pinMode(direction_pin_b, OUTPUT);
 
-  pinMode(angle_receptor_pin, INPUT);
-  pinMode(duty_receptor_pin, INPUT);
+  Wire.begin(8); // Join I2C bus with address 8
+  Wire.onReceive(receiveEvent); // Set instructions on how to handle events
 
-  servo.attach(servo_control_pin);
+  servo.attach(servo_control_pin); // Initialize servo to control pin
 }
 
 void loop() {
   // Map received values to appropriate output values
-  angle = map(analogRead(angle_receptor_pin), 0, 255, 0, 180);
-  duty = map(analogRead(duty_receptor_pin), 0, 255, -255, 255);
+  angle = map(angle_read, 0, 255, 0, 180);
+  duty = map(duty_read, 0, 255, -255, 255);
 
   // Write Servo motor
   servo.write(angle);
 
   // Write DC motor directions and duty cycles
-  digitalWrite(direction_pin_a, duty > 0 ? HIGH : LOW); // set direction of DCs
-  digitalWrite(direction_pin_b, duty > 0 ? HIGH : LOW); // set direction of DCs
-  analogWrite(motor_pin_a, abs(duty)); // set duty cycle
-  analogWrite(motor_pin_b, abs(duty)); // set duty cycle
+  digitalWrite(direction_pin_a, duty > 0 ? HIGH : LOW); // set direction of DC A
+  digitalWrite(direction_pin_b, duty > 0 ? LOW : HIGH); // set direction of DC B
+  analogWrite(motor_pin_a, abs(duty)); // set duty cycle A
+  analogWrite(motor_pin_b, abs(duty)); // set duty cycle B
+}
+
+void receiveEvent(int bytes) {
+  if (Wire.available() >= 2) {
+    angle_read = Wire.read();
+    duty_read = Wire.read();
+  }
 }

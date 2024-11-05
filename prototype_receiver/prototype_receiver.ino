@@ -11,11 +11,11 @@ Author: Evan Dworkin
 */
 
 /*
-To-do:
-  Test code, interate as necessary
+To-do: Move data transmission to a single struct to avoid
+any syncronization issues
 */
 
-#include <Servo.h>
+#include <Wire.h>
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -27,37 +27,33 @@ int CNS = 8;
 RF24 radio(CE, CNS);
 const byte addresses[][6] = {"node1"};
 
-// Data transfer pins to Uno motor controller
-int angle_transfer_pin = A0;
-int duty_transfer_pin = A1;
-
 // Read data from receiver module
-int angle; // An angle value between 0-180
-int duty; // A duty cycle value between -255-255
+int x, y; // Raw data from transmitter (joystick values)
 int angle_transfer, duty_transfer; // Values that can be trasmitted via PWM
 
 void setup() {
-  pinMode(angle_transfer_pin, OUTPUT);
-  pinMode(duty_transfer_pin, OUTPUT);
-  
   radio.begin();
   radio.openReadingPipe(1, addresses[0]); // node1
-  radio.setPALevel(RF24_PA_LOW);
-  radio.startListening();
-  radio.flush_rx();
+  radio.setPALevel(RF24_PA_LOW); // Power amplification, low for short range
+  radio.startListening(); // Recevier needs to listen
+  radio.flush_rx(); // Make sure no residual in buffer
+
+  Wire.begin(); // Start I2C as master
 }
 
 void loop() {
   while (!radio.available());
-  radio.read(&angle, sizeof(angle)); // read angle
+  radio.read(&x, sizeof(x)); // read angle
   delay(5); // wait to let data arrive
-  radio.read(&duty, sizeof(duty)); // read duty
+  radio.read(&y, sizeof(y)); // read duty
 
   // Map values to a PWM-accessible value
-  angle_transfer = map(angle, 0, 180, 0, 255);
-  duty_transfer = map(duty, -255, 255, 0, 255);
+  angle_transfer = map(x, 0, 1023, 0, 255);
+  duty_transfer = map(y, 0, 1023, 0, 255);
 
-  // Write the data to the Uno motor controller
-  analogWrite(angle_transfer_pin, angle_transfer);
-  analogWrite(duty_transfer_pin, duty_transfer);
+  // Write the data to the I2C bus 8
+  Wire.beginTransmission(8);
+  Wire.write(angle_transfer);
+  Wire.write(duty_transfer);
+  Wire.endTransmission();
 }
