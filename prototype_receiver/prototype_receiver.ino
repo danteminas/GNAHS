@@ -10,17 +10,15 @@ Code for the receiver module of the GNAHS prototype. In the
 Author: Evan Dworkin
 */
 
+/*
+To-do:
+  Test code, interate as necessary
+*/
+
 #include <Servo.h>
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-
-/*
-TO DO:
-  Separate the receiver code and the control code. The reciever
-  code will be uploaded to an Arduino Nano, then fed to an
-  Arduino Uno that will control the motors
-*/
 
 // See GNAHS documentation for the Arduino pinin and RF24L01 pinout
 // Setup for radio
@@ -29,33 +27,22 @@ int CNS = 8;
 RF24 radio(CE, CNS);
 const byte addresses[][6] = {"node1"};
 
-// Setup servo
-Servo servo;
+// Data transfer pins to Uno motor controller
+int angle_transfer_pin = A0;
+int duty_transfer_pin = A1;
 
-// Motor control pins
-int servo_control = 5;
-int motor_pin_a = 3;
-int motor_pin_b = 11;
-int direction_pin_a = 12;
-int direction_pin_b = 13;
-
-// Read data from receiver
-int angle, duty;
+// Read data from receiver module
+int angle; // An angle value between 0-180
+int duty; // A duty cycle value between -255-255
+int angle_transfer, duty_transfer; // Values that can be trasmitted via PWM
 
 void setup() {
-  pinMode(servo_control, OUTPUT);
-  pinMode(motor_pin_a, OUTPUT);
-  pinMode(motor_pin_b, OUTPUT);
-  pinMode(direction_pin_a, OUTPUT);
-  pinMode(direction_pin_b, OUTPUT);
-
-  servo.attach(servo_control);
-
+  pinMode(angle_transfer_pin, OUTPUT);
+  pinMode(duty_transfer_pin, OUTPUT);
+  
   radio.begin();
   radio.openReadingPipe(1, addresses[0]); // node1
   radio.setPALevel(RF24_PA_LOW);
-
-  Serial.begin(9600);
   radio.startListening();
   radio.flush_rx();
 }
@@ -66,10 +53,11 @@ void loop() {
   delay(5); // wait to let data arrive
   radio.read(&duty, sizeof(duty)); // read duty
 
-  servo.write(angle);
+  // Map values to a PWM-accessible value
+  angle_transfer = map(angle, 0, 180, 0, 255);
+  duty_transfer = map(duty, -255, 255, 0, 255);
 
-  digitalWrite(direction_pin_a, duty > 0 ? HIGH : LOW); // set direction of DCs
-  // digitalWrite(direction_pin_b, duty > 0 ? HIGH : LOW); // set direction of DCs
-  analogWrite(motor_pin_a, abs(duty)); // set duty cycle
-  // analogWrite(motor_pin_b, abs(duty)); // set duty cycle
+  // Write the data to the Uno motor controller
+  analogWrite(angle_transfer_pin, angle_transfer);
+  analogWrite(duty_transfer_pin, duty_transfer);
 }
