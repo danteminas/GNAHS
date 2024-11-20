@@ -1,9 +1,9 @@
 # Ground Navigation at High Speeds (GNAHS)
 ## What's in this repository?
-A collection of files used for the GNAHS project. Full documentation is in the Google Drive folder. (https://drive.google.com/drive/folders/1PZfH0M-oUMHmwuCybx-IKrOHdIKsB8Ay?usp=drive_link)\
+A collection of files used for the GNAHS project. Full documentation is in the Google Drive folder. (https://drive.google.com/drive/folders/1PZfH0M-oUMHmwuCybx-IKrOHdIKsB8Ay?usp=drive_link)
 
 ## What is it?
-The this project is a high-speed remote-controlled car fully designed in-house and built from scratch. It is funded through the New York University MakerSpace Prototyping Fund and will be produced using the NYU MakerSpace.\ 
+The this project is a high-speed remote-controlled car fully designed in-house and built from scratch. It is funded through the New York University MakerSpace Prototyping Fund and will be produced using the NYU MakerSpace.
 
 ## Current status: Testing and post-prototype design (updated 11/19/2024)
 ### Electronics:
