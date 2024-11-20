@@ -45,6 +45,8 @@ void setup() {
   Wire.onReceive(receiveEvent); // Set instructions on how to handle events
 
   servo.attach(servo_control_pin); // Initialize servo to control pin
+
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -60,6 +62,11 @@ void loop() {
   digitalWrite(direction_pin_b, duty > 0 ? LOW : HIGH); // set direction of DC B
   analogWrite(motor_pin_a, abs(duty)); // set duty cycle A
   analogWrite(motor_pin_b, abs(duty)); // set duty cycle B
+
+  // Print values
+  Serial.print(angle);
+  Serial.print(", ");
+  Serial.println(duty);
 }
 
 void receiveEvent(int bytes) {

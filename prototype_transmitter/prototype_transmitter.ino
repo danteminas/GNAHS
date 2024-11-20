@@ -26,10 +26,11 @@ const byte addresses[][6] = {"node1"};
 int x_in = A4;
 int y_in = A5;
 
-// Read inputs and convert to transmittable data
-int x, y; // Read x and y inputs from joystick
-int angle; // An angle value between 0-180
-int duty; // A duty cycle value between -255-255
+struct Data {
+  int x, y; // x and y inputs from joystcik
+};
+
+Data data;
 
 void setup() {
   pinMode(x_in, INPUT);
@@ -50,15 +51,14 @@ void setup() {
 }
 
 void loop() {
-  x = analogRead(x_in);
-  y = analogRead(y_in);
+  data.x = analogRead(x_in);
+  data.y = analogRead(y_in);
 
-  radio.write(&x, sizeof(x));
-  radio.write(&y, sizeof(y));
+  radio.write(&data, sizeof(data));
 
-  Serial.print(x);
+  Serial.print(data.x);
   Serial.print(", ");
-  Serial.println(y);
+  Serial.println(data.y);
 
   delay(10);
 }

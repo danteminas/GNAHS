@@ -28,7 +28,10 @@ RF24 radio(CE, CNS);
 const byte addresses[][6] = {"node1"};
 
 // Read data from receiver module
-int x, y; // Raw data from transmitter (joystick values)
+struct Data {
+  int x, y; // x and y inputs from joystcik
+};
+Data data; // Raw data from transmitter (joystick values)
 int angle_transfer, duty_transfer; // Values that can be trasmitted via PWM
 
 void setup() {
@@ -38,22 +41,37 @@ void setup() {
   radio.startListening(); // Recevier needs to listen
   radio.flush_rx(); // Make sure no residual in buffer
 
+  Serial.begin(9600);
+
   Wire.begin(); // Start I2C as master
+
+  // if (!radio.isChipConnected()) {
+  //   Serial.println("RF24 module is not connected properly!");
+  // } else {
+  //   Serial.println("RF24 module connected successfully.");
+  // }
+
 }
 
 void loop() {
-  while (!radio.available());
-  radio.read(&x, sizeof(x)); // read angle
-  delay(5); // wait to let data arrive
-  radio.read(&y, sizeof(y)); // read duty
+  // Serial.println("No data available");
+  if (radio.available()) {
+    radio.read(&data, sizeof(data)); // read data
 
-  // Map values to a PWM-accessible value
-  angle_transfer = map(x, 0, 1023, 0, 255);
-  duty_transfer = map(y, 0, 1023, 0, 255);
+    // Map values to a PWM-accessible value
+    angle_transfer = map(data.x, 0, 1023, 0, 255);
+    duty_transfer = map(data.y, 0, 1023, 0, 255);
 
-  // Write the data to the I2C bus 8
-  Wire.beginTransmission(8);
-  Wire.write(angle_transfer);
-  Wire.write(duty_transfer);
-  Wire.endTransmission();
+    // Print values to transfer
+    // Serial.println("Data received");
+    Serial.print(data.x);
+    Serial.print(", ");
+    Serial.println(data.y);
+
+    // Write the data to the I2C bus 8
+    Wire.beginTransmission(8);
+    Wire.write(angle_transfer);
+    Wire.write(duty_transfer);
+    Wire.endTransmission();
+  }
 }
