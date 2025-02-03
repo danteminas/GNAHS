@@ -20,8 +20,9 @@ RF24 radio(CE, CNS);
 const byte addresses[][6] = {"node1"};
 
 // Constants
-const int SERVO_MIN_ANGLE = 0;
-const int SERVO_MAX_ANGLE = 180;
+const int ANGLE__OF_ROTATION = 25;
+const int SERVO_MIN_ANGLE = 90 - ANGLE__OF_ROTATION;
+const int SERVO_MAX_ANGLE = 90 + ANGLE__OF_ROTATION;
 const int ESC_MIN_MICROSECONDS = 1000;
 const int ESC_MAX_MICROSECONDS = 2000;
 
@@ -33,10 +34,6 @@ Servo esc2;
 int servo_pin = 3;
 int esc1_pin = 6;
 int esc2_pin = 10;
-
-// Extra high (5V) and ground pins for the Servo
-int servo_ground = 5;
-int servo_high = 4;
 
 // Read data from receiver module
 struct Data {
@@ -58,11 +55,6 @@ void setup() {
   esc1.attach(esc1_pin);
   esc2.attach(esc2_pin);
 
-  pinMode(servo_ground, OUTPUT);
-  pinMode(servo_high, OUTPUT);
-  digitalWrite(servo_ground, LOW);
-  digitalWrite(servo_high, HIGH);
-
   if (!radio.isChipConnected()) {
     Serial.println("RF24 module is not connected properly!");
   } else {
@@ -76,7 +68,7 @@ void loop() {
     radio.read(&data, sizeof(data)); // read data
 
     // Map values to a PWM-accessible value
-    angle = map(data.x, 0, 1023, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
+    angle = map(data.x, 0, 1023, SERVO_MAX_ANGLE, SERVO_MIN_ANGLE);
     duty = map(data.y, 0, 1023, ESC_MAX_MICROSECONDS, 0);
 
     servo.write(angle);
